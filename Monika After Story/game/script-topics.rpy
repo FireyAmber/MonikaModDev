@@ -3481,6 +3481,77 @@ label monika_penname:
     m "There's no need to know more about me though, [player]."
     m "You already know that I'm in love with you after all~"
 
+init 5 python:
+    addEvent(Event(persistent.event_database,eventlabel='monika_madlibstest',prompt="MADLIBS",label=None,category=['philosophy'],random=True,unlocked=True,pool=True))
+
+
+label monika_madlibstest:
+    $ HKBHideButtons()
+    $ store.songs.enabled = False
+    # setup MASPoemWordList
+    python:
+        adj_list = list()
+        noun_list = list()
+        curr_list = None
+        with "mod_assets/poemwords/madlibs.txt" as words:
+            for line in words:
+                line = line.strip()
+                if line == "NOUN":
+                    curr_list = noun_list
+                elif line == "ADJ":
+                    curr_list = adj_list
+                else: # its words separated by commas
+                    word_list = line.split(",")
+                    for word in word_list:
+                        curr_list.append(MASPoemWord(word, 0, 0, 0, 0))
+    $ wordlist = MASPoemWordList(mas_poemwords)
+
+    $ from store.mas_poemgame_consts import STOCK_MODE
+    # setup dict of kwargs
+    python:
+        pg_kwargs = {
+            "show_monika": False,
+            "show_natsuki": False,
+            "show_sayori": False,
+            "show_yuri": False,
+            "trans_fast": True,
+            "poem_wordlist": wordlist,
+            "gather_words": True
+        }
+
+        # now make the call
+        # NOTE: call is midly dangerous. be careful when using
+        renpy.call("mas_poem_minigame", STOCK_MODE, **pg_kwargs)
+
+    $ testvalues = _return
+    $ HKBShowButtons()
+    $ play_song(store.songs.current_track)
+    $ store.songs.enabled = True
+    $ scene_change = True
+    $ _sel_words = testvalues.pop("words")
+    call spaceroom from _call_spaceroom_mpgoc
+    m "Hi [player]!"
+    m "These are your point totals:"
+    python:
+        for k,v in testvalues.iteritems():
+            m(k + " received "+ str(v) + " pt(s) from your choices.")
+    m "you selected these words:"
+    python:
+        bigword = ""
+        for i in range(0,10):
+            bigword += _sel_words[i].word + ","
+    m "[bigword]"
+    python:
+        bigword = ""
+        for i in range(10,len(_sel_words)):
+            bigword += _sel_words[i].word + ","
+    m "[bigword]"
+
+    m "I hope that was fun!"
+
+    return
+
+
 ##################
 #Incomplete ideas#
 ##################
